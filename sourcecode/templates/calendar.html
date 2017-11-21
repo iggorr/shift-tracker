@@ -37,13 +37,15 @@
   <ul class="days">
     {# Printing empty <li>s for the days of the last month #}
     {% for i in range(0, first) %}
-      <li></li>
+      <li>&zwnj;</li>
     {% endfor %}
     {# Printing the days as hyperlinks #}
     {% for day in range(1, last+1) %}
-      {# Special class for today's date #}
+      {# Special class for today's date or a day containing an event #}
       {% if day == current.day %}
         <li class="active">
+      {% elif day in populated %}
+        <li class="populated">
       {% else %}
         <li>
       {% endif %}

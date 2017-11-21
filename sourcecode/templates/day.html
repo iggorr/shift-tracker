@@ -7,8 +7,9 @@
 <body>
   <form action="/{{ year ~ '/' ~ month }}" method="POST" name="form">
     <label for="description">Description:</label>
-    <input type="text" name="description" id="description"/>
-    <input type="submit" value="Save" id="submit">
+    <input type="text" name="description"/>
+    <input type="hidden" name="day" value="{{ day }}"/>
+    <input type="submit" value="Save"/>
   </form>
 </body>
 </html>

@@ -17,12 +17,25 @@ def get_db():
     db.row_factory = sqlite3.Row
   return db
 
-# Function to query the database
+# Function to query the database in a simpler way
 def query_db(query, args=(), one=False):
   cur = get_db().execute(query, args)
   rv = cur.fetchall()
   cur.close()
   return (rv[0] if rf else None) if one else rv
+
+# Function to insert values into a database  
+def insert(table, values=()):
+  cur = get_db().cursor()
+  query = 'INSERT INTO %s VALUES (%s)' % (
+    table,
+    ', '.join(['?'] * len(values))
+  )
+  cur.execute(query, values)
+  g.db.commit()
+  id = cur.lastrowid
+  cur.close()
+  return id
 
 # Function to close the database connection when the context is destroyed
 @app.teardown_appcontext
@@ -45,10 +58,6 @@ def init_db():
 @app.route('/<int:year>/<int:month>', methods=['GET', 'POST'])
 def root(year=None, month=None):
 
-  sql = "SELECT * FROM events"
-  for row in query_db(sql):
-    print(row[0])
-
   # Setting today's date as the current date
   current = date.today()
   # If year and month variables have been specified, 
@@ -68,11 +77,19 @@ def root(year=None, month=None):
 
   # Updating the calendar if the user POST'ed a request
   if request.method == 'POST':
-    print "posted"
+    insert("events", [request.form['day'], current.month, current.year,
+    request.form['description']])
+
+  # Finding days of this month that contain an event and add them to a List
+  populated = []
+  sql = "SELECT * FROM events WHERE year=? AND month=?"
+  for row in query_db(sql, [current.year, current.month]):
+    populated.append(row['day'])
 
   # Passing the arguments into the template
   return render_template('calendar.html', current=current, last=last_day,
-  following=following_month, first=first_weekday, previous=previous_month)
+  following=following_month, first=first_weekday, previous=previous_month,
+  populated=populated)
 
 # Route for displaying the details of a day
 @app.route('/<int:year>/<int:month>/<int:day>')
