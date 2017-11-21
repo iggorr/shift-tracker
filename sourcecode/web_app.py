@@ -1,14 +1,53 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, g
 from datetime import date, timedelta
 from calendar import monthrange
+import sqlite3
 
 app = Flask(__name__)
+# Setting the path to the database
+db_location = 'var/calendar.db'
+
+# Function to get the current database connection
+def get_db():
+  db = getattr(g, 'db', None)
+  if db is None:
+    db = sqlite3.connect(db_location)
+    g.db = db
+    # Return database results as Row objects for easier operation
+    db.row_factory = sqlite3.Row
+  return db
+
+# Function to query the database
+def query_db(query, args=(), one=False):
+  cur = get_db().execute(query, args)
+  rv = cur.fetchall()
+  cur.close()
+  return (rv[0] if rf else None) if one else rv
+
+# Function to close the database connection when the context is destroyed
+@app.teardown_appcontext
+def close_db_connection(exception):
+  db = getattr(g, 'db', None)
+  if db is not None:
+    db.close()
+
+# Function to initialise the database
+def init_db():
+  with app.app_context():
+    db = get_db()
+    with app.open_resource('schema.sql', mode='r') as f:
+      db.cursor().executescript(f.read())
+    db.commit()
 
 # Main route of the application that is used to display current and other
 # month's views
 @app.route('/')
 @app.route('/<int:year>/<int:month>', methods=['GET', 'POST'])
 def root(year=None, month=None):
+
+  sql = "SELECT * FROM events"
+  for row in query_db(sql):
+    print(row[0])
 
   # Setting today's date as the current date
   current = date.today()
