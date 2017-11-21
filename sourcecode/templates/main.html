@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static',
+  filename='css/calendar.css') }}">
+  <title>my.Shifts</title>
+</head>
+<body>
+  <div class="month">
+    {# Links to previous and following months #}
+    <ul>
+      <li class="prev">
+        <a href="/{{ previous.year ~ '/' ~ previous.month }}">&#10094;</a>
+      </li>
+      <li class="next">
+        <a href="/{{ following.year ~ '/' ~ following.month }}">&#10095;</a>
+      </li>
+      {# Printing current month and year #}
+      <li>
+        {{ current.strftime("%B") }}<br>
+        <span>{{ current.year }}</span>
+      </li>
+    </ul>
+  </div>
+
+  <ul class="weekdays">
+    <li>Mo</li>
+    <li>Tu</li>
+    <li>We</li>
+    <li>Th</li>
+    <li>Fr</li>
+    <li>Sa</li>
+    <li>Su</li>
+  </ul>
+
+  <ul class="days">
+    {# Printing empty <li>s for the days of the last month #}
+    {% for i in range(0, first) %}
+      <li></li>
+    {% endfor %}
+    {# Printing the days as hyperlinks #}
+    {% for day in range(1, last+1) %}
+      <li>
+        {# Special class for today's date #}
+        {% if day == current.day %}
+          <span class="active">
+        {% endif %}
+        <a href="/{{ current.year ~ '/' ~ current.month ~ '/' ~ day }}">{{ day }}</a>
+        {% if day == current.day %}
+          </span>
+        {% endif %}
+        </li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
