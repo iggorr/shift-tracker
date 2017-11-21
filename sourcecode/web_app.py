@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from datetime import date, timedelta
 from calendar import monthrange
 
@@ -7,7 +7,7 @@ app = Flask(__name__)
 # Main route of the application that is used to display current and other
 # month's views
 @app.route('/')
-@app.route('/<int:year>/<int:month>')
+@app.route('/<int:year>/<int:month>', methods=['GET', 'POST'])
 def root(year=None, month=None):
 
   # Setting today's date as the current date
@@ -26,9 +26,19 @@ def root(year=None, month=None):
   # Calculating the previous month by substracting 1 day from the first day of
   # the current month
   previous_month = current.replace(day=1) - timedelta(days=1)
+
+  # Updating the calendar if the user POST'ed a request
+  if request.method == 'POST':
+    print "posted"
+
   # Passing the arguments into the template
-  return render_template('main.html', current=current, last=last_day,
+  return render_template('calendar.html', current=current, last=last_day,
   following=following_month, first=first_weekday, previous=previous_month)
+
+# Route for displaying the details of a day
+@app.route('/<int:year>/<int:month>/<int:day>')
+def day(year, month, day):
+  return render_template('day.html', year=year, month=month, day=day)
 
 if __name__ == '__main__':
   app.run(host='0.0.0.0', debug=True)
