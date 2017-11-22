@@ -15,6 +15,10 @@ a {
     text-decoration: none;
 }
 
+a:hover {
+    text-decoration: none;
+}
+
 /* Month header */
 .month {
     padding: 70px 25px;
@@ -88,6 +92,10 @@ a {
     color: #777;
 }
 
+.days li.populated {
+    background: #d2f9f1;
+}
+
 /* Highlight the "current" day */
 .days li.active {
     background: #1abc9c;
@@ -97,11 +105,21 @@ a {
     color: white !important;
 }
 
-.days li.populated {
-    background: #d2f9f1;
-}
-
 /* Change colour on hover */
 .days li:hover {
     background: #bbb;
+}
+
+.col-md-4 {
+    margin-top: 200px;
+  }
+
+.colour-block {
+    background-color: #eee;
+    padding: 10px;
+    margin-right: 10px;
+}
+
+.bot {
+    margin-top: 100px
 }
