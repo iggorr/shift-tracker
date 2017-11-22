@@ -1,0 +1,17 @@
+Before running the web application for the first time, a database has already
+been initialised. 
+In order to re-initialise the database, execute the following python statements in the current
+directory:
+>>> from web_app import init_db
+>>> init_db()
+
+The database comes prepopulated with two users:
+username: igor
+password: 12345
+
+username: simon
+password: 23456
+
+Both users will have some data related to them for demonstration purposes,
+however the database can be manipulated and updated through the web interace
+

@@ -92,6 +92,7 @@ a:hover {
     color: #777;
 }
 
+/* Days that contain shifts */
 .days li.populated {
     background: #d2f9f1;
 }

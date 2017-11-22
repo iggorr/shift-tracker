@@ -16,10 +16,10 @@
     <div class="row">
       <div class="col-md-4">
         <div class="colour-block">
-          <p>Pay Rate: &pound;{{ user['pay'] }}
+          <p>Pay Rate: &pound;{{ '{:0.2f}'.format(user['pay']) }}
           <p>Shifts Worked: {{ shifts }}</p>
-          <p>Total Hours Worked: {{ total }}</p>
-          <p>Earned: &pound;{{ earned }}</p>
+          <p>Total Hours Worked: {{ '{:0.2f}'.format(total) }}</p>
+          <p>Earned: &pound;{{ '{:0.2f}'.format(earned) }}</p>
         </div>
         <div class="bot">
           <p>User: {{ user['username'] }}</p>
@@ -27,6 +27,7 @@
         </div>
       </div>
       <div class="col-md-8">
+
         <div class="month">
           {# Links to previous and following months #}
           <ul>
@@ -74,12 +75,15 @@
             {% else %}
               <li>
             {% endif %}
-                  <a href="/{{ current.year ~ '/' ~ current.month ~ '/' ~ day }}">
-                  {{ day }}<br>
+                {# Printing the hyperlink with the date and the details of
+                shift #}
+                <a href="/{{ current.year ~ '/' ~ current.month ~ '/' ~ day }}">
+                  {{ day }}
                   {% if populated[day] %}
-                    <p style="float:left;">{{ populated[day]['start_time'] }} - {{
+                    <br><p style="float:left;">{{ populated[day]['start_time'] }} - {{
                     populated[day]['end_time'] }}</p>
-                  {% endif %}</a>
+                  {% endif %}
+                </a>
               </li>
           {% endfor %}
         </ul>

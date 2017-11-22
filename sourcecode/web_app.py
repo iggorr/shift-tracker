@@ -1,12 +1,13 @@
-from flask import Flask, render_template, request, g, redirect, url_for
+from flask import Flask, render_template, request, g, redirect, url_for, flash
 from datetime import date, datetime, timedelta
 from calendar import monthrange
 import sqlite3
 
 app = Flask(__name__)
+app.secret_key = 'it is secret'
 # Setting the path to the database
 db_location = 'var/calendar.db'
-# Setting the user
+# Initialising the current user
 user = None
 
 # Function to get the current database connection
@@ -26,7 +27,7 @@ def query_db(query, args=(), one=False):
   cur.close()
   return (rv[0] if rv else None) if one else rv
 
-# Function to insert values into a database  
+# Function to insert or update values in the database  
 def insert(table, values=()):
   cur = get_db().cursor()
   query = 'INSERT OR REPLACE INTO %s VALUES (%s)' % (
@@ -69,26 +70,33 @@ def page_not_found(error):
 # Login page
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-  # Display if currently not logged in
+  # Display page if currently not logged in, otherwise redirect to root
   global user
   if not user:
-    # If simply accessing the page
+    # Display page if just accessing the page
     if request.method == 'GET':
-      return render_template('login.html') 
+      return render_template('login.html')
     # If attempting to login, query credentials against database
-    else:
+    elif request.form['action'] == 'Login':
       sql = "SELECT * FROM users WHERE username=? AND password=?"
       # If not successful - try again
       if not query_db(sql, [request.form['username'], request.form['password']], one=True):
+        flash("Login unsuccessful!")
         return render_template('login.html')
+      # If successful - set the "user" variable
       else:
         user = request.form['username']
-  # If logged in proceed to root page
+    # If registering new user
+    else:
+      # Add new user to the database
+      insert('users', [request.form['username'], request.form['password'], 10.00])
+      flash("New user created!")
   return redirect(url_for('root'))
 
 # Function to logout
 @app.route('/logout')
 def logout():
+  # Reseting the user
   global user
   user = None
   return redirect(url_for('root'))
@@ -102,6 +110,7 @@ def root(year=None, month=None):
   # Checking if user's logged in, if not redirect to login page
   if not user:
     return redirect(url_for('login'))
+
   # Setting today's date as the current date
   current = date.today()
   # If year and month variables have been specified, 
@@ -121,7 +130,7 @@ def root(year=None, month=None):
 
   # Making changes to the calendar if the user POST'ed a request
   if request.method == 'POST':
-    # Add new event if the user created one
+    # Add new shift to the database if the user created one
     if request.form['action'] == 'Save':
       insert("events", [request.form['day'], current.month, current.year,
       request.form['start_time'], request.form['end_time'],
@@ -130,23 +139,30 @@ def root(year=None, month=None):
     else:
       delete("events", [request.form['day'], current.month, current.year, user])
 
-  # Finding days of this month that contain a shift and add them to a dictionary
+  # Initialising a dictionary for storing days containing shifts
   populated = {}
+  # Total number of shifts
   shifts = 0
+  # Sum of hours worked
   total_hours = 0
+  # Total earnings
   earned = 0
 
   # Query user details
   sql = "SELECT * FROM users WHERE username=?"
   user_details = query_db(sql, [user], one=True)
 
+  # Going through the shifts in the database for the current month
   sql = "SELECT day, start_time, end_time FROM events WHERE year=? AND month=? AND user=?"
   for row in query_db(sql, [current.year, current.month, user]):
+    # Adding to the total number of shifts
     shifts += 1
     time_format = '%H:%M'
+    # Calculating duration of shift
     duration = datetime.strptime(row['end_time'], time_format) - datetime.strptime(row['start_time'], time_format)
     duration_rounded = duration.total_seconds() / 3600.0
     total_hours += duration_rounded
+    # Adding to total earnings
     earned += user_details['pay'] * duration_rounded
     populated[row['day']] = {'start_time': row['start_time'], 'end_time':
     row['end_time'], 'duration': duration_rounded}
@@ -169,13 +185,18 @@ def day(year, month, day):
   sql = "SELECT * FROM events WHERE year=? AND month=? AND day=? AND user=?"
   event = query_db(sql, [year, month, day, user], one=True)
   time_format = '%H:%M'
+  # If shift exists, calculate duration and money earned
   if event:
     duration = datetime.strptime(event['end_time'], time_format) - datetime.strptime(event['start_time'], time_format)
     duration_rounded = duration.total_seconds() / 3600.0
+    sql = "SELECT * FROM users WHERE username=?"
+    row = query_db(sql, [user], one=True)
+    earned = row['pay'] * duration_rounded
   else:
     duration_rounded = None
+    earned = None
   return render_template('day.html', year=year, month=month, day=day,
-  event=event, duration=duration_rounded)
+  event=event, duration=duration_rounded, earned=earned)
 
 if __name__ == '__main__':
   app.run(host='0.0.0.0', debug=True)
